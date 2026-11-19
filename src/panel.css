@@ -1,0 +1,98 @@
+:root {
+  --bg: rgba(32, 33, 38, 0.97);
+  --card: rgba(255, 255, 255, 0.045);
+  --line: rgba(255, 255, 255, 0.09);
+  --text: #f1f3f7;
+  --muted: #9aa1ae;
+  --dim: #6f7684;
+  --accent: #60b4ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: transparent; overflow: hidden; height: 100%; }
+body {
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  color: var(--text); font-size: 13px; user-select: none; -webkit-user-select: none;
+  padding: 10px;
+}
+.panel {
+  height: 100%; border-radius: 12px; background: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex; flex-direction: column; padding: 16px 14px 10px; position: relative;
+}
+header { display: flex; align-items: center; gap: 6px; padding: 0 6px 12px; }
+h1 { font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif; font-weight: 600; font-size: 16px; flex: 1; }
+.updated { color: var(--muted); font-size: 11.5px; margin-right: 4px; }
+.updated.err { color: #ff8a7a; }
+.icon-btn {
+  font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 14px; color: #c6ccd6;
+  background: transparent; border: 0; width: 30px; height: 30px; border-radius: 6px; cursor: pointer;
+}
+.icon-btn:hover { background: rgba(255, 255, 255, 0.07); }
+.icon-btn:active { background: rgba(255, 255, 255, 0.04); }
+.icon-btn.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+main { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; flex: 1; display: flex; flex-direction: column; }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.card-head h2 { font-size: 13px; font-weight: 600; }
+.reset { color: var(--muted); font-size: 12px; }
+.card-body { display: flex; flex: 1; gap: 14px; min-height: 0; }
+
+.meter-wrap { position: relative; width: 112px; flex: none; }
+.meter {
+  position: absolute; right: 2px; top: 6px; bottom: 6px; width: 14px;
+  display: flex; flex-direction: column-reverse; gap: 2px;
+}
+.seg { flex: 1; border-radius: 4px; background: rgba(255, 255, 255, 0.085); transition: background 0.4s, box-shadow 0.4s; }
+.scale { position: absolute; right: 24px; top: 6px; bottom: 6px; width: 26px; }
+.scale span { position: absolute; right: 0; transform: translateY(50%); font-size: 9.5px; color: var(--dim); line-height: 1; }
+.pill {
+  position: absolute; right: 54px; transform: translateY(50%);
+  display: flex; align-items: center; transition: bottom 0.5s ease;
+}
+.pill span {
+  font-family: "Segoe UI Variable Display", "Segoe UI", sans-serif; font-weight: 700; font-size: 15px;
+  padding: 1px 9px; border-radius: 999px; border: 1px solid; white-space: nowrap;
+}
+.pill::after { content: ""; width: 26px; border-top: 1px dashed currentColor; opacity: 0.8; margin-right: -28px; }
+
+.chart { flex: 1; display: flex; flex-direction: column; min-width: 0; padding-top: 6px; }
+.chart svg { flex: 1; width: 100%; overflow: visible; }
+.axis { display: flex; justify-content: space-between; color: var(--dim); font-size: 10.5px; padding-top: 4px; }
+.empty-chart { fill: var(--dim); font-size: 11px; }
+
+footer { display: flex; justify-content: space-between; align-items: center; padding: 10px 6px 0; color: var(--muted); font-size: 11.5px; }
+button.link { background: none; border: 0; color: var(--accent); font: inherit; font-size: 12px; cursor: pointer; padding: 2px 0; }
+button.link:hover { text-decoration: underline; }
+
+.center-view { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 0 24px; }
+.center-view h2 { font-size: 16px; font-weight: 600; }
+.center-view p { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.big-icon { font-family: "Segoe Fluent Icons", "Segoe MDL2 Assets"; font-size: 34px; color: var(--accent); }
+button.primary {
+  background: var(--accent); color: #0b1724; border: 0; border-radius: 6px; padding: 9px 18px;
+  font: 600 13px "Segoe UI", sans-serif; cursor: pointer; margin-top: 6px;
+}
+button.primary:hover { filter: brightness(1.08); }
+button.secondary {
+  background: rgba(255, 255, 255, 0.07); color: var(--text); border: 1px solid var(--line);
+  border-radius: 6px; padding: 7px 12px; font: 12.5px "Segoe UI", sans-serif; cursor: pointer;
+}
+button.secondary:hover { background: rgba(255, 255, 255, 0.11); }
+
+.settings { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 0 6px; }
+.settings h3 { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 14px 0 4px; }
+.settings .row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.settings .row.head { border: 0; justify-content: flex-start; gap: 6px; padding-top: 0; cursor: default; margin-left: -8px; }
+.settings .row.head h2 { font-size: 15px; font-weight: 600; }
+.settings .row.buttons { border: 0; gap: 8px; justify-content: flex-start; cursor: default; flex-wrap: wrap; }
+.settings #btn-test { align-self: flex-start; margin-top: 8px; }
+.settings input { display: none; }
+.switch { width: 38px; height: 20px; border-radius: 10px; border: 1px solid #8a909c; position: relative; flex: none; transition: 0.2s; }
+.switch::after { content: ""; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #c6ccd6; top: 3px; left: 4px; transition: 0.2s; }
+input:checked + .switch { background: var(--accent); border-color: var(--accent); }
+input:checked + .switch::after { left: 21px; background: #0b1724; }
+
+[hidden] { display: none !important; }

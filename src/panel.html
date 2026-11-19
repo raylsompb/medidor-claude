@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<title>Medidor Claude</title>
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<div class="panel" id="panel">
+  <header>
+    <h1>Uso do Claude</h1>
+    <span class="updated" id="updated">Carregando...</span>
+    <button class="icon-btn" id="btn-refresh" title="Atualizar agora">&#xE72C;</button>
+    <button class="icon-btn" id="btn-settings" title="Configurações">&#xE713;</button>
+  </header>
+
+  <main id="view-main">
+    <section class="card" data-kind="session">
+      <div class="card-head"><h2>Sessão</h2><span class="reset"></span></div>
+      <div class="card-body">
+        <div class="meter-wrap">
+          <div class="scale"></div>
+          <div class="pill"><span></span></div>
+          <div class="meter"></div>
+        </div>
+        <div class="chart"><svg preserveAspectRatio="none"></svg><div class="axis"><span>início</span><span>agora</span></div></div>
+      </div>
+    </section>
+    <section class="card" data-kind="week">
+      <div class="card-head"><h2>Semana</h2><span class="reset"></span></div>
+      <div class="card-body">
+        <div class="meter-wrap">
+          <div class="scale"></div>
+          <div class="pill"><span></span></div>
+          <div class="meter"></div>
+        </div>
+        <div class="chart"><svg preserveAspectRatio="none"></svg><div class="axis"><span>início</span><span>agora</span></div></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="view-login" class="center-view" hidden>
+    <div class="big-icon">&#xE77B;</div>
+    <h2>Entre na sua conta do Claude</h2>
+    <p>O medidor lê o mesmo uso que aparece em Configurações &gt; Uso no site do Claude.</p>
+    <button class="primary" id="btn-login">Entrar com a conta do Claude</button>
+  </div>
+
+  <div id="view-settings" class="settings" hidden>
+    <div class="row head"><button class="icon-btn" id="btn-back" title="Voltar">&#xE72B;</button><h2>Configurações</h2></div>
+    <h3>Avisos</h3>
+    <label class="row"><span>Avisar quando chegar em 50%</span><input type="checkbox" data-setting="alert50"><i class="switch"></i></label>
+    <label class="row"><span>Avisar quando chegar em 80%</span><input type="checkbox" data-setting="alert80"><i class="switch"></i></label>
+    <label class="row"><span>Avisar quando chegar em 90%</span><input type="checkbox" data-setting="alert90"><i class="switch"></i></label>
+    <label class="row"><span>Tocar som no aviso</span><input type="checkbox" data-setting="sound"><i class="switch"></i></label>
+    <button class="link" id="btn-test">Testar aviso</button>
+    <h3>Geral</h3>
+    <label class="row"><span>Iniciar com o Windows</span><input type="checkbox" data-setting="autostart"><i class="switch"></i></label>
+    <h3>Conta</h3>
+    <div class="row buttons">
+      <button class="secondary" id="btn-logout">Sair da conta / trocar conta</button>
+      <button class="secondary" id="btn-quit">Fechar o Medidor</button>
+    </div>
+  </div>
+
+  <footer id="footer">
+    <span>Atualiza a cada 2 min</span>
+    <button class="link" id="btn-logout-footer">Sair da conta</button>
+  </footer>
+</div>
+<script src="panel.js"></script>
+</body>
+</html>
