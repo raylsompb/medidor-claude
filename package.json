@@ -1,7 +1,7 @@
 {
   "name": "medidor-claude",
   "productName": "Medidor Claude",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Mostra o uso do Claude (sessão e semana) na bandeja do Windows.",
   "main": "src/main.js",
   "author": "pc-ok",
