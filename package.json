@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "description": "Mostra o uso do Claude (sessão e semana) na bandeja do Windows.",
   "main": "src/main.js",
-  "author": "pc-ok",
+  "author": "raylsompb",
   "license": "MIT",
   "private": true,
   "scripts": {
