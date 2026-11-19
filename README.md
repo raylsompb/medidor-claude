@@ -1,4 +1,4 @@
-# Medidor Claude<img width="382" height="609" alt="image" src="https://github.com/user-attachments/assets/99f9fcac-ba78-47fa-8965-edb9101b2317" />
+
 
 
 Mostra o seu uso do Claude na bandeja do Windows, ao lado do relógio. Sem precisar abrir o site.
@@ -6,6 +6,7 @@ Mostra o seu uso do Claude na bandeja do Windows, ao lado do relógio. Sem preci
 <p>
   <img src="docs/painel.png" width="340" alt="Painel do Medidor Claude">
   <img src="docs/configuracoes.png" width="340" alt="Configurações">
+  # Medidor Claude<img width="382" height="609" alt="image" src="https://github.com/user-attachments/assets/99f9fcac-ba78-47fa-8965-edb9101b2317" />
 </p>
 
 - Ícone com a porcentagem da sessão de 5 horas e uma barrinha que muda de cor: azul-claro, amarelo, vermelho.
