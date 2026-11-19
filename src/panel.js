@@ -30,7 +30,7 @@ window.renderIcon = function (pct, blinkOff, size, mode) {
   let text, color;
   if (mode === 'login') { text = '?'; color = '#9aa3b2'; }
   else if (mode !== 'ok') { text = '–'; color = '#9aa3b2'; }
-  else { text = String(Math.round(pct * 100)); color = blinkOff ? 'rgb(110,20,25)' : rgb(col(pct)); }
+  else { text = String(Math.round(pct * 100)); color = blinkOff ? 'rgb(110,20,25)' : rgb(col(Math.min(pct, 0.82))); }
   const nw = size * 0.66;
   const fs = size * (text.length < 3 ? 0.58 : 0.42);
   g.font = `700 ${fs}px "Segoe UI Variable Display", "Segoe UI", sans-serif`;
@@ -135,6 +135,7 @@ function render(st) {
   current = st;
   const upd = $('#updated');
   upd.classList.toggle('err', !!st.error);
+  upd.hidden = st.status === 'login';
   if (st.status === 'loading') upd.textContent = 'Carregando...';
   else if (st.error) upd.textContent = st.updatedAt ? `Sem conexão · ${fmtTime(st.updatedAt)}` : 'Sem conexão';
   else upd.textContent = st.updatedAt ? `Atualizado ${fmtTime(st.updatedAt)}` : '';

@@ -5,10 +5,12 @@ const fs = require('fs');
 
 const MOCK = process.argv.includes('--mock');
 const SHOT = process.argv.includes('--screenshot');
+const PROBE = process.argv.includes('--probe'); // teste: abre o login real, fotografa e fecha
 const BASE = 'https://claude.ai';
 const POLL_MS = 2 * 60 * 1000;
 const UA = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${process.versions.chrome} Safari/537.36`;
 const ICON_PATH = path.join(__dirname, '..', 'build', 'icon.ico');
+const shotsDir = () => app.isPackaged ? path.join(app.getPath('temp'), 'medidor-claude-shots') : path.join(__dirname, '..', 'shots');
 const THRESHOLDS = [50, 80, 90];
 
 app.setAppUserModelId('com.local.medidorclaude');
@@ -339,7 +341,7 @@ ipcMain.handle('quit', () => { app.isQuitting = true; app.quit(); });
 
 // ---------- modo screenshot (testes) ----------
 async function screenshots() {
-  const out = path.join(__dirname, '..', 'shots'); fs.mkdirSync(out, { recursive: true });
+  const out = shotsDir(); fs.mkdirSync(out, { recursive: true });
   const wait = ms => new Promise(r => setTimeout(r, ms));
   panel.setPosition(40, 40); panel.showInactive(); await wait(900);
   fs.writeFileSync(path.join(out, 'panel.png'), (await panel.webContents.capturePage()).toPNG());
@@ -377,4 +379,16 @@ app.whenReady().then(async () => {
 
   if (SHOT) return screenshots();
   if (state.status === 'login') openLogin();
+  if (PROBE) {
+    console.log('probe status:', state.status, state.error || '');
+    setTimeout(async () => {
+      const out = shotsDir(); fs.mkdirSync(out, { recursive: true });
+      if (loginWin) {
+        console.log('probe login url:', loginWin.webContents.getURL());
+        try { fs.writeFileSync(path.join(out, 'login-window.png'), (await loginWin.webContents.capturePage()).toPNG()); }
+        catch (e) { console.log('probe capture falhou:', e.message); }
+      }
+      app.isQuitting = true; app.quit();
+    }, 12000);
+  }
 });

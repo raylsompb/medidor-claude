@@ -16,6 +16,7 @@
   "build": {
     "appId": "com.local.medidorclaude",
     "productName": "Medidor Claude",
+    "electronLanguages": ["pt-BR", "en-US"],
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -27,8 +28,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "build/icon.ico",
-      "signAndEditExecutable": false
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": true,
@@ -40,5 +40,9 @@
       "artifactName": "MedidorClaude-Setup-${version}.exe",
       "uninstallDisplayName": "Medidor Claude"
     }
+  },
+  "devDependencies": {
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0"
   }
 }
