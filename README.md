@@ -1,4 +1,5 @@
-# Medidor Claude
+# Medidor Claude<img width="382" height="609" alt="image" src="https://github.com/user-attachments/assets/99f9fcac-ba78-47fa-8965-edb9101b2317" />
+
 
 Mostra o seu uso do Claude na bandeja do Windows, ao lado do relógio. Sem precisar abrir o site.
 
