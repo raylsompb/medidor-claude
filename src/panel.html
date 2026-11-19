@@ -42,9 +42,19 @@
 
   <div id="view-login" class="center-view" hidden>
     <div class="big-icon">&#xE77B;</div>
-    <h2>Entre na sua conta do Claude</h2>
-    <p>O medidor lê o mesmo uso que aparece em Configurações &gt; Uso no site do Claude.</p>
-    <button class="primary" id="btn-login">Entrar com a conta do Claude</button>
+    <h2 id="login-title">Entre na sua conta do Claude</h2>
+    <p id="login-text">Escolha como entrar. Você só faz isso uma vez.</p>
+    <div class="login-options">
+      <button class="option" id="btn-use-cc" hidden>
+        <b>Usar o Claude já instalado</b><span>Pega o login do Claude Code deste PC.</span>
+      </button>
+      <button class="option" id="btn-login-browser" hidden>
+        <b>Entrar pelo navegador principal</b><span>Abre o login no seu navegador e mostra o link para copiar e colar. Também troca a conta do Claude Code.</span>
+      </button>
+      <button class="option" id="btn-login">
+        <b>Entrar nesta janela</b><span>Use "Continuar com e-mail": o código chega no seu e-mail e dá para ver no celular.</span>
+      </button>
+    </div>
   </div>
 
   <div id="view-settings" class="settings" hidden>
@@ -58,15 +68,18 @@
     <h3>Geral</h3>
     <label class="row"><span>Iniciar com o Windows</span><input type="checkbox" data-setting="autostart"><i class="switch"></i></label>
     <h3>Conta</h3>
+    <p class="source-line" id="source-line"></p>
     <div class="row buttons">
-      <button class="secondary" id="btn-logout">Sair da conta / trocar conta</button>
+      <button class="secondary" id="btn-use-cc-2" hidden>Usar o login do Claude Code</button>
+      <button class="secondary" id="btn-login-browser-2" hidden>Entrar pelo navegador</button>
+      <button class="secondary" id="btn-logout">Trocar conta</button>
       <button class="secondary" id="btn-quit">Fechar o Medidor</button>
     </div>
   </div>
 
   <footer id="footer">
-    <span>Atualiza a cada 2 min</span>
-    <button class="link" id="btn-logout-footer">Sair da conta</button>
+    <span id="footer-text">Atualiza a cada 2 min</span>
+    <button class="link" id="btn-logout-footer">Trocar conta</button>
   </footer>
 </div>
 <script src="panel.js"></script>

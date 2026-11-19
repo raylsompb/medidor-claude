@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('medidor', {
   refresh: () => ipcRenderer.invoke('refresh'),
   logout: () => ipcRenderer.invoke('logout'),
   login: () => ipcRenderer.invoke('login'),
+  loginBrowser: () => ipcRenderer.invoke('login-browser'),
+  useClaudeCode: () => ipcRenderer.invoke('use-claude-code'),
   setSetting: (k, v) => ipcRenderer.invoke('set-setting', k, v),
   testAlert: () => ipcRenderer.invoke('test-alert'),
   hide: () => ipcRenderer.invoke('hide'),

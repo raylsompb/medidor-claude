@@ -63,7 +63,7 @@ function buildMeters() {
 function fmtTime(ms) { return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
 function fmtReset(iso, kind) {
   if (!iso) return '';
-  const d = new Date(iso), now = new Date();
+  const d = new Date(Math.round(Date.parse(iso) / 60e3) * 60e3), now = new Date();
   const hm = fmtTime(d);
   if (kind === 'session' && d.toDateString() === now.toDateString()) return `zera às ${hm}`;
   return `zera ${d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')} ${hm}`;
@@ -150,6 +150,21 @@ function render(st) {
     drawCard(document.querySelector('.card[data-kind="session"]'), st.session, st.history || []);
     drawCard(document.querySelector('.card[data-kind="week"]'), st.week, st.history || []);
   }
+  // login e origem dos dados
+  const ccAvailable = st.hasClaudeCode && st.settings.source === 'web';
+  const expired = st.loginReason === 'expired';
+  $('#login-title').textContent = expired ? 'O login do Claude Code expirou' : 'Entre na sua conta do Claude';
+  $('#login-text').textContent = expired
+    ? 'Abra o Claude Code uma vez e o medidor volta sozinho. Ou escolha outra forma de entrar.'
+    : 'Escolha como entrar. Você só faz isso uma vez.';
+  $('#btn-use-cc').hidden = !ccAvailable;
+  $('#btn-login-browser').hidden = !st.hasClaudeCli;
+  $('#btn-use-cc-2').hidden = !ccAvailable;
+  $('#btn-login-browser-2').hidden = !st.hasClaudeCli;
+  const src = st.source === 'claude-code' ? 'Conectado pelo Claude Code' : st.source === 'web' ? 'Conectado pelo site do Claude' : 'Sem conexão';
+  $('#source-line').textContent = src;
+  $('#footer-text').textContent = `${src} · a cada 2 min`;
+
   document.querySelectorAll('[data-setting]').forEach(inp => {
     const k = inp.dataset.setting;
     inp.checked = k.startsWith('alert') ? !!st.settings.alerts[k.slice(5)] : !!st.settings[k];
@@ -190,6 +205,10 @@ $('#btn-refresh').onclick = async () => {
 $('#btn-settings').onclick = () => showView($('#view-settings').hidden ? 'settings' : 'main');
 $('#btn-back').onclick = () => showView('main');
 $('#btn-login').onclick = () => api.login();
+$('#btn-login-browser').onclick = () => api.loginBrowser();
+$('#btn-login-browser-2').onclick = () => api.loginBrowser();
+$('#btn-use-cc').onclick = () => api.useClaudeCode();
+$('#btn-use-cc-2').onclick = () => api.useClaudeCode();
 $('#btn-logout').onclick = () => api.logout();
 $('#btn-logout-footer').onclick = () => api.logout();
 $('#btn-quit').onclick = () => api.quit();

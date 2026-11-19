@@ -1,7 +1,8 @@
 // Medidor Claude: mostra o uso do Claude (sessão de 5h e semana) na bandeja do Windows.
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, screen, session, Notification } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, screen, session, Notification, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 const MOCK = process.argv.includes('--mock');
 const SHOT = process.argv.includes('--screenshot');
@@ -32,7 +33,7 @@ function save(name, obj) {
 }
 
 let settings, store;
-const state = { status: 'loading', session: null, week: null, updatedAt: null, error: null };
+const state = { status: 'loading', session: null, week: null, updatedAt: null, error: null, source: null, loginReason: null, hasClaudeCode: false, hasClaudeCli: false };
 
 // ---------- acesso ao claude.ai ----------
 class AuthError extends Error {}
@@ -94,6 +95,50 @@ async function fetchUsage() {
   }
 }
 
+// ---------- login do Claude Code já instalado no PC ----------
+// Lê o login salvo pelo Claude Code. Só lê: nunca renova nem altera o arquivo,
+// para não deslogar o Claude Code.
+function claudeCodeCredPath() {
+  const dir = process.env.CLAUDE_CONFIG_DIR || path.join(require('os').homedir(), '.claude');
+  return path.join(dir, '.credentials.json');
+}
+function readClaudeCode() {
+  try {
+    const o = JSON.parse(fs.readFileSync(claudeCodeCredPath(), 'utf8')).claudeAiOauth;
+    if (!o || !o.accessToken) return null;
+    return { token: o.accessToken, expiresAt: Number(o.expiresAt) || 0 };
+  } catch { return null; }
+}
+
+class ExpiredError extends Error {}
+
+async function fetchUsageClaudeCode(cred) {
+  if (cred.expiresAt && cred.expiresAt < Date.now() + 30e3) throw new ExpiredError('login do Claude Code expirado');
+  let r;
+  try {
+    r = await net.fetch('https://api.anthropic.com/api/oauth/usage', {
+      headers: { Authorization: `Bearer ${cred.token}`, 'anthropic-beta': 'oauth-2025-04-20', 'Content-Type': 'application/json' },
+    });
+  } catch (e) { throw new Error('rede: ' + e.message); }
+  if (r.status === 401 || r.status === 403) throw new ExpiredError('login do Claude Code expirado');
+  if (!r.ok) throw new Error(`api respondeu ${r.status}`);
+  return parseUsage(await r.json());
+}
+
+// Ordem: login do Claude Code (se existir) e, como alternativa, login feito no site.
+async function fetchAny() {
+  const cred = settings.source === 'web' ? null : readClaudeCode();
+  if (cred) {
+    try { const u = await fetchUsageClaudeCode(cred); state.source = 'claude-code'; return u; }
+    catch (e) {
+      if (!(e instanceof ExpiredError)) throw e;
+      try { const u = await fetchUsage(); state.source = 'web'; return u; }
+      catch (e2) { if (e2 instanceof AuthError) throw e; throw e2; }
+    }
+  }
+  const u = await fetchUsage(); state.source = 'web'; return u;
+}
+
 // ---------- dados de teste ----------
 function mockUsage() {
   const now = Date.now();
@@ -121,14 +166,18 @@ async function refresh() {
   if (refreshing) return refreshing;
   refreshing = (async () => {
     try {
-      const u = MOCK ? mockUsage() : await fetchUsage();
-      state.session = u.session; state.week = u.week;
+      state.hasClaudeCode = !!readClaudeCode();
+      const u = MOCK ? (state.source = 'claude-code', mockUsage()) : await fetchAny();
+      state.session = u.session; state.week = u.week; state.loginReason = null;
       state.status = (u.session || u.week) ? 'ok' : 'nodata';
       state.updatedAt = Date.now(); state.error = null;
       addHistory(u);
       checkAlerts(u);
     } catch (e) {
-      if (e instanceof AuthError) { state.status = 'login'; state.session = state.week = null; }
+      if (e instanceof AuthError || e instanceof ExpiredError) {
+        state.status = 'login'; state.session = state.week = null;
+        state.loginReason = (e instanceof ExpiredError || (state.hasClaudeCode && settings.source !== 'web')) ? 'expired' : 'none';
+      }
       else { state.error = e.message; if (state.status === 'loading') state.status = 'error'; }
       console.error('refresh:', e.message);
     } finally {
@@ -170,7 +219,7 @@ function checkAlerts(u) {
     }
   }
   for (const k of Object.keys(store.alerted)) if (now - store.alerted[k] > 9 * 86400e3) delete store.alerted[k];
-  save('store.json', store);
+  if (!MOCK) save('store.json', store);
 }
 
 function notify(title, body) {
@@ -179,7 +228,7 @@ function notify(title, body) {
 }
 
 function fmtReset(iso, kind) {
-  const d = new Date(iso), now = new Date();
+  const d = new Date(Math.round(Date.parse(iso) / 60e3) * 60e3), now = new Date();
   const hm = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const sameDay = d.toDateString() === now.toDateString();
   if (kind === 'session' && sameDay) return `às ${hm}`;
@@ -232,7 +281,10 @@ function trayMenu() {
     { label: 'Iniciar com o Windows', type: 'checkbox', checked: settings.autostart, click: m => setSetting('autostart', m.checked) },
     { label: 'Som do aviso', type: 'checkbox', checked: settings.sound, click: m => setSetting('sound', m.checked) },
     { type: 'separator' },
-    { label: state.status === 'login' ? 'Entrar na conta' : 'Sair da conta / trocar conta', click: () => state.status === 'login' ? openLogin() : logout() },
+    ...(state.source === 'claude-code' ? [{ label: 'Conectado pelo Claude Code', enabled: false }] : []),
+    ...(state.hasClaudeCli ? [{ label: 'Entrar pelo navegador principal', click: loginBrowser }] : []),
+    { label: state.status === 'login' ? 'Entrar nesta janela (site do Claude)' : (state.source === 'claude-code' ? 'Usar outra conta (entrar pelo site)' : 'Sair da conta / trocar conta'), click: () => state.status === 'login' ? openLogin() : logout() },
+    ...(settings.source === 'web' && state.hasClaudeCode ? [{ label: 'Voltar a usar o login do Claude Code', click: useClaudeCode }] : []),
     { label: 'Fechar o Medidor', click: () => { app.isQuitting = true; app.quit(); } },
   ]);
 }
@@ -307,14 +359,41 @@ function openLogin() {
   loginWin.on('closed', () => { loginWin = null; clearInterval(loginCheckTimer); });
 }
 
+// Login no navegador principal: roda "claude auth login" num terminal visível.
+// O Claude Code abre o navegador e também mostra o link para copiar.
+// Quando o login termina, o arquivo de login muda e o medidor atualiza sozinho.
+function detectClaudeCli() {
+  exec('where claude', { windowsHide: true }, (err, out) => { state.hasClaudeCli = !err && !!String(out).trim(); pushState(); });
+}
+function loginBrowser() {
+  settings.source = 'auto'; save('settings.json', settings);
+  exec('start "Entrar no Claude" cmd /k "echo Abrindo o login do Claude no seu navegador... & echo Se nao abrir, copie o link que aparecer abaixo e cole no navegador. & echo. & claude auth login & echo. & echo Pronto. Pode fechar esta janela."', { windowsHide: false });
+}
+
+async function useClaudeCode() {
+  settings.source = 'auto'; save('settings.json', settings);
+  store.history = []; save('store.json', store);
+  await refresh();
+}
+
 async function logout() {
+  if (state.source === 'claude-code') {
+    // não dá para deslogar o Claude Code daqui: passa a usar o login do site
+    settings.source = 'web'; save('settings.json', settings);
+    store.history = []; save('store.json', store);
+    state.status = 'login'; state.loginReason = 'none'; state.session = state.week = null; state.source = null;
+    await pushState();
+    showPanel(); // mostra as opções de login no painel
+    return;
+  }
+  settings.source = 'auto';
   await ses.clearStorageData();
   await ses.clearCache();
   settings.orgId = null; save('settings.json', settings);
   store.history = []; save('store.json', store);
-  state.status = 'login'; state.session = state.week = null; state.error = null;
+  state.status = 'login'; state.session = state.week = null; state.error = null; state.source = null; state.loginReason = 'none';
   await pushState();
-  openLogin();
+  showPanel();
 }
 
 // ---------- configurações ----------
@@ -333,6 +412,8 @@ function setSetting(key, value) {
 ipcMain.handle('get-state', () => publicState());
 ipcMain.handle('refresh', () => refresh());
 ipcMain.handle('logout', () => logout());
+ipcMain.handle('use-claude-code', () => useClaudeCode());
+ipcMain.handle('login-browser', () => { panel.hide(); loginBrowser(); });
 ipcMain.handle('login', () => { panel.hide(); openLogin(); });
 ipcMain.handle('set-setting', (_e, k, v) => setSetting(k, v));
 ipcMain.handle('test-alert', () => notify('Teste do Medidor Claude', 'É assim que o aviso vai aparecer.'));
@@ -343,12 +424,15 @@ ipcMain.handle('quit', () => { app.isQuitting = true; app.quit(); });
 async function screenshots() {
   const out = shotsDir(); fs.mkdirSync(out, { recursive: true });
   const wait = ms => new Promise(r => setTimeout(r, ms));
+  const cap = async name => { panel.webContents.invalidate(); await wait(300); fs.writeFileSync(path.join(out, name), (await panel.webContents.capturePage()).toPNG()); };
   panel.setPosition(40, 40); panel.showInactive(); await wait(900);
-  fs.writeFileSync(path.join(out, 'panel.png'), (await panel.webContents.capturePage()).toPNG());
+  if (process.env.MEDIDOR_DEBUG) console.log('debug', JSON.stringify({ cli: state.hasClaudeCli, cc: state.hasClaudeCode, src: state.source }),
+    await panel.webContents.executeJavaScript(`[...document.querySelectorAll('.card[data-kind=session] .seg')].slice(0,3).map(s=>s.style.background+'|'+getComputedStyle(s).backgroundColor).join(' ; ')`));
+  await cap('panel.png');
   panel.webContents.send('show-view', 'settings'); await wait(400);
-  fs.writeFileSync(path.join(out, 'settings.png'), (await panel.webContents.capturePage()).toPNG());
+  await cap('settings.png');
   state.status = 'login'; panel.webContents.send('state', publicState()); panel.webContents.send('show-view', 'main'); await wait(400);
-  fs.writeFileSync(path.join(out, 'login.png'), (await panel.webContents.capturePage()).toPNG());
+  await cap('login.png');
   for (const p of [0, 0.1, 0.2, 0.5, 0.8, 0.95, 1]) {
     for (const size of [16, 24, 64]) {
       const url = await panel.webContents.executeJavaScript(`window.renderIcon(${p}, false, ${size}, "ok")`);
@@ -363,10 +447,11 @@ app.on('second-instance', () => panel && showPanel());
 app.on('window-all-closed', e => e.preventDefault());
 
 app.whenReady().then(async () => {
-  settings = load('settings.json', { alerts: { 50: true, 80: true, 90: true }, sound: true, autostart: true, orgId: null });
+  settings = load('settings.json', { alerts: { 50: true, 80: true, 90: true }, sound: true, autostart: true, orgId: null, source: 'auto' });
   store = load('store.json', { history: [], alerted: {} });
   ses = session.fromPartition('persist:claude');
   ses.setUserAgent(UA);
+  detectClaudeCli();
   app.userAgentFallback = UA;
   applyAutostart();
 
@@ -376,9 +461,11 @@ app.whenReady().then(async () => {
   tray.on('click', togglePanel);
   await refresh();
   startPolling();
+  // quando o Claude Code renovar o login, atualiza na hora
+  fs.watchFile(claudeCodeCredPath(), { interval: 10e3 }, () => { if (settings.source !== 'web') refresh(); });
 
   if (SHOT) return screenshots();
-  if (state.status === 'login') openLogin();
+  if (state.status === 'login' && !state.hasClaudeCode) openLogin();
   if (PROBE) {
     console.log('probe status:', state.status, state.error || '');
     setTimeout(async () => {

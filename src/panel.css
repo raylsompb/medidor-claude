@@ -96,3 +96,14 @@ input:checked + .switch { background: var(--accent); border-color: var(--accent)
 input:checked + .switch::after { left: 21px; background: #0b1724; }
 
 [hidden] { display: none !important; }
+
+.login-options { display: flex; flex-direction: column; gap: 8px; width: 100%; margin-top: 6px; }
+button.option {
+  text-align: left; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px; color: var(--text); cursor: pointer; font: 12px "Segoe UI", sans-serif; display: flex; flex-direction: column; gap: 3px;
+}
+button.option:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(96, 180, 255, 0.5); }
+button.option b { font-size: 13px; font-weight: 600; }
+button.option span { color: var(--muted); line-height: 1.4; }
+button.option:first-of-type:not([hidden]) { border-color: rgba(96, 180, 255, 0.45); }
+.source-line { color: var(--muted); font-size: 12px; padding: 6px 0 2px; }
